@@ -33,7 +33,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -61,10 +61,14 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define FWE_Pin GPIO_PIN_1
 #define FWE_GPIO_Port GPIOA
+#define TP156_Pin GPIO_PIN_15
+#define TP156_GPIO_Port GPIOB
 #define DEBUG_TX_Pin GPIO_PIN_6
 #define DEBUG_TX_GPIO_Port GPIOC
 #define DEBUG_RX_Pin GPIO_PIN_7
 #define DEBUG_RX_GPIO_Port GPIOC
+#define TP160_Pin GPIO_PIN_10
+#define TP160_GPIO_Port GPIOC
 #define EMR_PDCTB_Pin GPIO_PIN_2
 #define EMR_PDCTB_GPIO_Port GPIOD
 #define EMR_PDCTB_EXTI_IRQn EXTI2_IRQn

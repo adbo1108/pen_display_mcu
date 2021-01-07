@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -28,7 +28,7 @@
 #include "usbd_custom_hid_if.h"
 
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
@@ -65,25 +65,30 @@ USBD_HandleTypeDef hUsbDeviceFS;
 void MX_USB_DEVICE_Init(void)
 {
   /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
-
+ printf("MX_USB_DEVICE_Init \n\r");
   /* USER CODE END USB_DEVICE_Init_PreTreatment */
 
   /* Init Device Library, add supported class and start the library. */
   if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK)
   {
-    Error_Handler();
+	  printf("USBD_Init Fail\n\r");
+	  Error_Handler();
   }
+  printf("USBD_Init Done \n\r");
   if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_CUSTOM_HID) != USBD_OK)
   {
-    Error_Handler();
+    printf("USBD_RegisterClass Fail\n\r");
+	  Error_Handler();
   }
   if (USBD_CUSTOM_HID_RegisterInterface(&hUsbDeviceFS, &USBD_CustomHID_fops_FS) != USBD_OK)
   {
-    Error_Handler();
+    printf("USBD_CUSTOM_HID_RegisterInterface Fail\n\r");
+	  Error_Handler();
   }
   if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
   {
-    Error_Handler();
+    printf("USBD_Start Fail\n\r");
+	  Error_Handler();
   }
 
   /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */

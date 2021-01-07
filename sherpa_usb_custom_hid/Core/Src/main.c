@@ -31,7 +31,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define EMR_I2C_ADDR_7BIT 0x09
+#define EMR_I2C_PACKET_SIZE 8
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,18 +47,91 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t EMR_INT = 0 ;
+extern I2C_HandleTypeDef hi2c3;
+extern UART_HandleTypeDef huart6;
+uint8_t pData[EMR_I2C_PACKET_SIZE];
+uint8_t aRxBuffer[5];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+void Handle_EMR_Data();
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int fputc(int32_t ch, FILE *f)
+{
+    while((USART6->SR&0X40)==0);
+    USART6->DR = (uint8_t) ch;  
+	//HAL_UART_Transmit(&huart6,(uint8_t *)&ch,1,1000);
+        
+    return ch;
+}
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    uint8_t data[5];
+    if(huart->Instance==USART6)
+    {
+        data[0] = aRxBuffer[0];
+		 memcpy(data,aRxBuffer,5);
+		 memset(aRxBuffer,0,5);
+        HAL_UART_Transmit(&huart6,(uint8_t*)data,5,1000);
+        
+    }
+	 if(huart->Instance==USART2)
+    {
+        data[0] = aRxBuffer[0];
+		 memcpy(data,aRxBuffer,5);
+		 memset(aRxBuffer,0,5);
+        HAL_UART_Transmit(&huart2,(uint8_t*)data,5,1000);
+        
+    }
+}
+
+void Handle_EMR_Data ()
+{
+	if(EMR_INT)
+	{	
+		HAL_StatusTypeDef status;
+		uint8_t i ;
+		status =  HAL_I2C_Master_Receive(&hi2c3, EMR_I2C_ADDR_7BIT, pData, EMR_I2C_PACKET_SIZE, 500);
+		if(status == HAL_ERROR)
+		{
+			printf("i2c HAL_ERROR");
+		}
+		else if(status == HAL_BUSY)
+		{
+			printf("i2c HAL_BUSY");
+		}
+		else if(status == HAL_TIMEOUT)
+		{
+			printf("i2c HAL_TIMEOUT");
+		}	
+		else if (status == HAL_OK){
+			printf("receive EMR Data \n\r");
+			for(i=0;i<EMR_I2C_PACKET_SIZE ; i++ )
+			printf("0x%x\n\r",pData[i]);
+		}
+		EMR_INT = 0 ;
+	}	
+	
+}
+
+
+/* EMR Interrupt */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == GPIO_PIN_4)
+	{
+		EMR_INT = 1;
+	}		
+}	
 /* USER CODE END 0 */
 
 /**
@@ -89,20 +163,37 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C3_Init();
-  MX_USB_DEVICE_Init();
   MX_USART2_UART_Init();
   MX_USART6_UART_Init();
+ // MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+ HAL_UART_Receive_IT(&huart6,aRxBuffer, sizeof(aRxBuffer)); //使能接收中斷
+ HAL_UART_Receive_IT(&huart2,aRxBuffer, sizeof(aRxBuffer)); //使能接收中斷
+	printf("stm32 mcu init done V3\n\r");
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  
+  HAL_GPIO_WritePin(TP160_GPIO_Port, TP160_Pin, GPIO_PIN_RESET);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  
+#if 1	  
+	//   HAL_Delay(500);
+	//  printf("stm32 mcu init done\n\r");
+	 // printf("boot test \n\r");
+		//HAL_UART_Transmit(&huart6,pData,1,1000);
+	//  HAL_GPIO_WritePin(TP160_GPIO_Port, TP160_Pin, GPIO_PIN_SET);
+	 // HAL_GPIO_TogglePin(TP160_GPIO_Port, TP160_Pin);
+#endif
+		Handle_EMR_Data () ;
+	  
+	  
   }
   /* USER CODE END 3 */
 }

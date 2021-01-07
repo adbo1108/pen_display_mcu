@@ -56,7 +56,9 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart6;
+extern uint8_t aRxBuffer[5];
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -228,17 +230,34 @@ void EXTI4_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USB On The Go FS global interrupt.
+  * @brief This function handles USART2 global interrupt.
   */
-void OTG_FS_IRQHandler(void)
+void USART2_IRQHandler(void)
 {
-  /* USER CODE BEGIN OTG_FS_IRQn 0 */
+  /* USER CODE BEGIN USART2_IRQn 0 */
 
-  /* USER CODE END OTG_FS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
-  /* USER CODE BEGIN OTG_FS_IRQn 1 */
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+	// 若我們要持續收到中斷，就要手動反覆開啟
+	HAL_UART_Receive_IT(&huart2,aRxBuffer, sizeof(aRxBuffer)); //使能接收中斷
+  /* USER CODE END USART2_IRQn 1 */
+}
 
-  /* USER CODE END OTG_FS_IRQn 1 */
+/**
+  * @brief This function handles USART6 global interrupt.
+  */
+void USART6_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART6_IRQn 0 */
+
+  /* USER CODE END USART6_IRQn 0 */
+  HAL_UART_IRQHandler(&huart6);
+  /* USER CODE BEGIN USART6_IRQn 1 */
+	// 若我們要持續收到中斷，就要手動反覆開啟
+    HAL_UART_Receive_IT(&huart6,aRxBuffer, sizeof(aRxBuffer));
+
+  /* USER CODE END USART6_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
