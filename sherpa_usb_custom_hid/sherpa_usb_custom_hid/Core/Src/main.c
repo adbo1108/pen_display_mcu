@@ -31,8 +31,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define EMR_I2C_ADDR_7BIT 0x09
-#define EMR_I2C_PACKET_SIZE 8
+uint8_t EMR_I2C_ADDR_8BIT = 0x13 ;
+#define EMR_I2C_PACKET_SIZE 17
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -48,7 +48,7 @@
 
 /* USER CODE BEGIN PV */
 uint8_t EMR_INT = 0 ;
-extern I2C_HandleTypeDef hi2c3;
+extern I2C_HandleTypeDef hi2c1;
 extern UART_HandleTypeDef huart6;
 extern GPIO_InitTypeDef GPIO_InitStruct ;
 uint8_t pData[EMR_I2C_PACKET_SIZE];
@@ -67,6 +67,12 @@ void Handle_EMR_Data();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void Delay()
+{
+	uint16_t d = 0xf;
+	while(d--) ;
+}	
 int fputc(int32_t ch, FILE *f)
 {
   //  while((USART6->SR&0X40)==0);
@@ -97,31 +103,93 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     }
 }
 
-void Handle_EMR_Data ()
+void ResetEMR()
 {
+	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,1);
+	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,0);
+	Delay();
+	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,1);
+//	printf("force to EMR RESET !\n\r");
+}	
+
+uint8_t EMR_Alive_Check(void)
+{
+    HAL_StatusTypeDef i2c_res;
+    uint8_t	addr_w=0x12;
+    //uint8_t	addr_r=0x13;
+
+    i2c_res = HAL_I2C_Master_Transmit( &hi2c1, addr_w, 0x00, 0x01, 10000 );
+    if (i2c_res != HAL_OK)
+    {
+       
+        printf( "EMR Alive Check ERROR. Res = 0x%02X  \r\n",i2c_res );
+         
+        ResetEMR();
+    }
+    else
+    {
+       
+     //   printf( "EMR Alive Check PASS !!  \r\n");
+           
+    }
+    return i2c_res;
+
+}
+
+
+
+void Handle_EMR_Data ()
+	
+{
+	uint8_t loop = 100 ;
 	if(EMR_INT)
 	{	
+	//	printf("EMR INT\n\r");
 		HAL_StatusTypeDef status;
 		uint8_t i ;
-		status =  HAL_I2C_Master_Receive(&hi2c3, EMR_I2C_ADDR_7BIT, pData, EMR_I2C_PACKET_SIZE, 500);
+		
+		/*一直讀到中斷Rising Trigger */
+		while(1)
+		{
+		if(EMR_INT == 0) break;	
+		status =  HAL_I2C_Master_Receive(&hi2c1, EMR_I2C_ADDR_8BIT, pData, EMR_I2C_PACKET_SIZE, 100);
+		
 		if(status == HAL_ERROR)
 		{
 			printf("i2c HAL_ERROR\n\r");
+			ResetEMR() ;
+			break;
+			
 		}
 		else if(status == HAL_BUSY)
 		{
 			printf("i2c HAL_BUSY\n\r");
+			ResetEMR() ;
+			break;
 		}
 		else if(status == HAL_TIMEOUT)
 		{
 			printf("i2c HAL_TIMEOUT\n\r");
+			ResetEMR() ;
+			break;
 		}	
 		else if (status == HAL_OK){
-			printf("receive EMR Data \n\r");
-			for(i=0;i<EMR_I2C_PACKET_SIZE ; i++ )
-			printf("0x%x\n\r",pData[i]);
+#if 1			
+		//	printf("receive EMR Data %d\n\r",EMR_I2C_PACKET_SIZE);
+		//	for(i=0;i<EMR_I2C_PACKET_SIZE ; i++ )
+		//		printf("0x%x, ",pData[i]);
+		//	printf("\n\r");
+#endif			
+		 USBD_CUSTOM_HID_SendReport_FS(pData,EMR_I2C_PACKET_SIZE) ;
+	
 		}
-		EMR_INT = 0 ;
+				
+	}
+
+		
+		
+		//EMR_INT = 0 ;
+		EMR_Alive_Check();
 	}	
 	
 }
@@ -130,10 +198,25 @@ void Handle_EMR_Data ()
 /* EMR Interrupt */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if(GPIO_Pin == GPIO_PIN_4)
+	if(GPIO_Pin == EMR_IRQ_Pin)
 	{
-		EMR_INT = 1;
-	}		
+		if(HAL_GPIO_ReadPin(EMR_IRQ_GPIO_Port,EMR_IRQ_Pin) == RESET)
+		{
+			EMR_INT = 1;
+			//printf("1");
+		}	
+		else
+		{
+			EMR_INT = 0;
+			//printf("0");
+		}
+		
+	//	Handle_EMR_Data ();
+	}
+	if(GPIO_Pin == GPIO_PIN_2)
+	{
+	//	printf("2\n\r");	
+	}
 }	
 /* USER CODE END 0 */
 
@@ -165,15 +248,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C3_Init();
   MX_USART2_UART_Init();
   MX_USART6_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
  HAL_UART_Receive_IT(&huart6,aRxBuffer, sizeof(aRxBuffer)); //使能接收中斷
  HAL_UART_Receive_IT(&huart2,aRxBuffer, sizeof(aRxBuffer)); //使能接收中斷
-	printf("stm32 mcu init done V3\n\r");
-
+	printf("stm32 mcu init done V5\n\r");
+ EMR_Alive_Check();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -187,7 +270,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  
 #if 1	  
-	   HAL_Delay(1);
+	  // HAL_Delay(1);
 	//  printf("stm32 mcu init done\n\r");
 	 // printf("boot test \n\r");
 		//HAL_UART_Transmit(&huart6,pData,1,1000);
@@ -195,7 +278,7 @@ int main(void)
 	 // HAL_GPIO_TogglePin(TP160_GPIO_Port, TP160_Pin);
 #endif
 	  
-#if 1
+#if 0
 	  // assign Report ID
    send_data[0]=0x02;
    for(i=1;i<9;i++)
@@ -205,7 +288,7 @@ int main(void)
         
    USBD_CUSTOM_HID_SendReport_FS(send_data,9) ;
 #endif	  
-	//	Handle_EMR_Data () ;
+		Handle_EMR_Data () ;
 	  
 	  
   }

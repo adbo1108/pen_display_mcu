@@ -81,6 +81,10 @@ void Error_Handler(void);
 #define EMR_GPIO1_GPIO_Port GPIOB
 #define EMR_GPIO0_Pin GPIO_PIN_7
 #define EMR_GPIO0_GPIO_Port GPIOB
+#define EMR_I2C_SCL_Pin GPIO_PIN_8
+#define EMR_I2C_SCL_GPIO_Port GPIOB
+#define EMR_I2C_SDA_Pin GPIO_PIN_9
+#define EMR_I2C_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

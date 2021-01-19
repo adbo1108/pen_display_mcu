@@ -300,7 +300,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-
+#include <stdio.h>
 /** @addtogroup STM32F4xx_HAL_Driver
   * @{
   */
@@ -1150,11 +1150,12 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
   * @param  Timeout Timeout duration
   * @retval HAL status
   */
+
 HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
 {
   /* Init tickstart for timeout management*/
   uint32_t tickstart = HAL_GetTick();
-
+	
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
     /* Wait until BUSY flag is reset */
@@ -1189,8 +1190,10 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
     /* Send Slave Address */
     if (I2C_MasterRequestRead(hi2c, DevAddress, Timeout, tickstart) != HAL_OK)
     {
-      return HAL_ERROR;
+      
+		 return HAL_ERROR;
     }
+	 
 
     if (hi2c->XferSize == 0U)
     {

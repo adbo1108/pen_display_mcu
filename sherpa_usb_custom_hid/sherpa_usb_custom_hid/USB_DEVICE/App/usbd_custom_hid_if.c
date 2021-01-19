@@ -32,7 +32,6 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -100,8 +99,8 @@ __ALIGN_BEGIN static uint8_t CUSTOM_HID_ReportDesc_FS[USBD_CUSTOM_HID_REPORT_DES
         0x26, 0xff, 0x00,              //   LOGICAL_MAXIMUM (255)
         0x75, 0x08,                    //   REPORT_SIZE (8)
        //Report ID
-        0x85,0x02,                     // REPORT_ID(2)
-        0x95, 0x08,                    //   REPORT_COUNT (8))
+        0x85,0x11,                     // REPORT_ID(0x11)
+        0x95, 16, //   REPORT_COUNT (17))
         0x09, 0x01,                    //   USAGE (Undefined)
         0x81, 0x02,                    //   INPUT (Data,Var,Abs)
 
