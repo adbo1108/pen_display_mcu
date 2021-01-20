@@ -33,6 +33,8 @@
 /* USER CODE BEGIN PTD */
 uint8_t EMR_I2C_ADDR_8BIT = 0x13 ;
 #define EMR_I2C_PACKET_SIZE 17
+uint8_t ROTATION_0_CMD[17] = { 0x11,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00 };
+uint8_t ROTATION_90_CMD[17] = { 0x11,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x01 };
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -91,6 +93,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		 memcpy(data,aRxBuffer,5);
 		 memset(aRxBuffer,0,5);
         HAL_UART_Transmit(&huart6,(uint8_t*)data,5,1000);
+		 USBD_CUSTOM_HID_SendReport_FS(ROTATION_90_CMD,EMR_I2C_PACKET_SIZE) ;
         
     }
 	 if(huart->Instance==USART2)
@@ -105,10 +108,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void ResetEMR()
 {
-	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,1);
-	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,0);
+	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,GPIO_PIN_RESET);
 	Delay();
-	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,1);
+	HAL_GPIO_WritePin(EMR_RST_GPIO_Port,GPIO_PIN_5,GPIO_PIN_SET);
 //	printf("force to EMR RESET !\n\r");
 }	
 
@@ -141,12 +144,12 @@ uint8_t EMR_Alive_Check(void)
 void Handle_EMR_Data ()
 	
 {
-	uint8_t loop = 100 ;
+
 	if(EMR_INT)
 	{	
 	//	printf("EMR INT\n\r");
 		HAL_StatusTypeDef status;
-		uint8_t i ;
+		
 		
 		/*一直讀到中斷Rising Trigger */
 		while(1)
@@ -185,10 +188,6 @@ void Handle_EMR_Data ()
 		}
 				
 	}
-
-		
-		
-		//EMR_INT = 0 ;
 		EMR_Alive_Check();
 	}	
 	
